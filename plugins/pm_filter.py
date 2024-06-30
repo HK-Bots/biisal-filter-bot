@@ -5,10 +5,10 @@ from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidD
 from Script import script
 import pyrogram
 from info import SETTINGS, STICKERS_IDS,PREMIUM_POINT,MAX_BTN, BIN_CHANNEL, USERNAME, URL, ADMINS, LANGUAGES,QUALITIES,YEARS,SEASONS, AUTH_CHANNEL, SUPPORT_GROUP, IMDB, IMDB_TEMPLATE, LOG_VR_CHANNEL, TUTORIAL, FILE_CAPTION, SHORTENER_WEBSITE, SHORTENER_API, SHORTENER_WEBSITE2, SHORTENER_API2, DELETE_TIME
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, InputMediaPhoto, ChatPermissions
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, InputMediaPhoto, ChatPermissions, WebAppInfo
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid, ChatAdminRequired
-from utils import temp, get_settings, is_check_admin, get_status, get_hash, get_name, get_size, save_group_settings, is_req_subscribed, get_poster, get_status, get_readable_time , imdb
+from utils import temp, get_settings, is_check_admin, get_status, get_hash, get_name, get_size, save_group_settings, is_req_subscribed, get_poster, get_shortlink, get_status, get_readable_time , imdb
 from database.users_chats_db import db
 from database.ia_filterdb import Media, get_search_results, get_bad_files, get_file_details
 import random
@@ -742,28 +742,53 @@ async def cb_handler(client: Client, query: CallbackQuery):
             return await query.answer('ɴᴏ sᴜᴄʜ ꜰɪʟᴇ ᴇxɪsᴛs 🚫')
         files = files_[0]
         btn = [[
-            InlineKeyboardButton('🎗️ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ 🎗️', url=f'https://t.me/{temp.U_NAME}?start=file_{chat_id}_{file_id}')
+            InlineKeyboardButton('❤ ɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ ❤', url=f'https://t.me/{temp.U_NAME}?start=file_{chat_id}_{file_id}')
         ]]
         reply_markup = InlineKeyboardMarkup(btn)
-        return await query.message.edit(text=f'<b>ᴛʜᴀɴᴋs ғᴏʀ ᴊᴏɪɴɪɴɢ ᴏᴜʀ ᴄʜᴀɴɴᴇʟ 🔥😗\nɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ : {files.file_name[:20]}.. ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ⚡\n\nJᴀɪ sʜʀᴇᴇ ᴋʀɪsʜɴᴀ 😉</b>',reply_markup=reply_markup)
+        return await query.message.edit(text=f'<b>ᴛʜᴀɴᴋs ғᴏʀ ᴊᴏɪɴɪɴɢ ᴏᴜʀ ᴄʜᴀɴɴᴇʟ 🔥😗\nɢᴇᴛ ʏᴏᴜʀ ғɪʟᴇ : {files.file_name[:20]}.. ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ⚡\n\nJᴀʏ Sʜʀᴇᴇ Rᴀᴍ 😉</b>',reply_markup=reply_markup)
 
     elif query.data.startswith("stream"):
         user_id = query.from_user.id
         file_id = query.data.split('#', 1)[1]
         STREAM_LINK = await db.get_stream_link()
-        AKS = await client.send_cached_media(
+        log_msg = await client.send_cached_media(
             chat_id=BIN_CHANNEL,
             file_id=file_id)
-        online = f"{STREAM_LINK if STREAM_LINK else URL}/watch/{AKS.id}?hash={get_hash(AKS)}"
-        download = f"{STREAM_LINK if STREAM_LINK else URL}/{AKS.id}?hash={get_hash(AKS)}"
-        btn= [[
-            InlineKeyboardButton("ᴡᴀᴛᴄʜ ᴏɴʟɪɴᴇ", url=online),
-            InlineKeyboardButton("ꜰᴀsᴛ ᴅᴏᴡɴʟᴏᴀᴅ", url=download)
-        ],[
-            InlineKeyboardButton('❌ ᴄʟᴏsᴇ ❌', callback_data='close_data')
-        ]]
+	fileName = {quote_plus(get_name(log_msg))}
+        online = f"{STREAM_LINK if STREAM_LINK else URL}/watch/{log_msg.id}?hash={get_hash(log_msg)}"
+        download = f"{STREAM_LINK if STREAM_LINK else URL}/{log_msg.id}?hash={get_hash(log_msg)}"
+	hk_online = await get_shortlink(online)
+        hk_download = await get_shortlink(download)
+        if await db.has_premium_access(user_id):                               
+                buttons = [[
+                    InlineKeyboardButton("🚀 ꜰᴀꜱᴛ ᴅᴏᴡɴʟᴏᴀᴅ", url=online),
+                    InlineKeyboardButton("ᴡᴀᴛᴄʜ ᴏɴʟɪɴᴇ 🧿", url=download)
+                ],[
+                    InlineKeyboardButton("• ᴡᴀᴛᴄʜ ɪɴ ᴡᴇʙ ᴀᴘᴘ •", web_app=WebAppInfo(url=online))
+                ],[
+                    InlineKeyboardButton('📌 ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ 📌', url='https://t.me/main_movie_hub')
+                ]]
+            else:
+                await query.answer("🚸 ɴᴏᴛᴇ :\nᴀᴅ-ꜰʀᴇᴇ ꜱᴇʀᴠɪᴄᴇ ɪꜱ ᴏɴʟʏ ꜰᴏʀ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀꜱ.\n\nᴛᴏ ᴋɴᴏᴡ ᴍᴏʀᴇ ᴄʜᴇᴄᴋ ᴘʟᴀɴꜱ.", show_alert=True)
+                await query.message.reply_text(
+                text="<b>‼️ ᴡᴀɴᴛ ᴛᴏ ʀᴇᴍᴏᴠᴇ ᴀᴅꜱ ?\n\n✅ ᴘᴜʀᴄʜᴀꜱᴇ ᴘʀᴇᴍɪᴜᴍ ᴀɴᴅ ᴇɴᴊᴏʏ ᴀᴅ-ꜰʀᴇᴇ ᴇxᴘᴇʀɪᴇɴᴄᴇ.</b>",
+                quote=True,
+                disable_web_page_preview=True,                  
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💸 ᴄʜᴇᴄᴋᴏᴜᴛ ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴꜱ 💸", callback_data='premium')]]))
+                buttons = [[
+                    InlineKeyboardButton("🚀 ꜰᴀꜱᴛ ᴅᴏᴡɴʟᴏᴀᴅ", url=hk_download),
+                    InlineKeyboardButton("ᴡᴀᴛᴄʜ ᴏɴʟɪɴᴇ 🧿", url=hk_online)
+                ],[
+                    InlineKeyboardButton("• ᴡᴀᴛᴄʜ ɪɴ ᴡᴇʙ ᴀᴘᴘ •", web_app=WebAppInfo(url=hk_online))
+                ]]
         await query.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(btn)
+	await log_msg.reply_text(
+                    text=f"#LinkGenrated\n\nIᴅ : <code>{user_id}</code>\nUꜱᴇʀɴᴀᴍᴇ : {username}\n\nNᴀᴍᴇ : {fileName}",
+                    quote=True,
+                    disable_web_page_preview=True,
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🚀 ꜰᴀꜱᴛ ᴅᴏᴡɴʟᴏᴀᴅ", url=download),
+                                                        InlineKeyboardButton('ᴡᴀᴛᴄʜ ᴏɴʟɪɴᴇ 🧿', url=online)]]))
         )
 
     elif query.data == "buttons":
@@ -778,21 +803,21 @@ async def cb_handler(client: Client, query: CallbackQuery):
   
     elif query.data == "start":
         buttons = [[
-            InlineKeyboardButton('⇆ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘs ⇆', url=f'http://t.me/{temp.U_NAME}?startgroup=start')
-        ],[
-            InlineKeyboardButton('⚙ ꜰᴇᴀᴛᴜʀᴇs', callback_data='features'),
-            InlineKeyboardButton('🎗️ ᴘʀᴇᴍɪᴜᴍ', callback_data='premium'),
-        ],
-        [
-            InlineKeyboardButton('🎁 ɢᴇᴛ ᴘʀᴇᴍɪᴜᴍ ғʀᴇᴇ 🎁', callback_data=f'free_premium#{query.from_user.id}')
-        ],
-        [
-            InlineKeyboardButton('🎭 ʏᴏᴜʀ ᴘᴏɪɴᴛs ✨', callback_data=f'point#{query.from_user.id}'),
-            InlineKeyboardButton('🫠 ᴀʙᴏᴜᴛ 🚩', callback_data=f'about')
-        ],
-        [
-            InlineKeyboardButton('🤞🏻 ᴇᴀʀɴ ᴍᴏɴᴇʏ ᴡɪᴛʜ ʙᴏᴛ 🤡', callback_data='earn')
-        ]]    
+                            InlineKeyboardButton('☆ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ☆', url=f'http://t.me/{temp.U_NAME}?startgroup=start')
+                            ],[
+                            InlineKeyboardButton('⚙ ꜰᴇᴀᴛᴜʀᴇs', callback_data='features'),
+                            InlineKeyboardButton('✨ Uᴘᴅᴀᴛᴇ ᴛᴏ Pʀᴇᴍɪᴜᴍ', callback_data='premium'),
+                            ],
+                            [
+                            InlineKeyboardButton('🎁 ɢᴇᴛ ᴘʀᴇᴍɪᴜᴍ ғʀᴇᴇ 🎁', callback_data=f'free_premium#{message.from_user.id}')
+                            ],
+                            [
+                            InlineKeyboardButton('🎭 ʏᴏᴜʀ ᴘᴏɪɴᴛs ✨', callback_data=f'point#{message.from_user.id}'),
+                            InlineKeyboardButton('🫠 ᴀʙᴏᴜᴛ 🚩', callback_data='about')
+                            ],
+                            [
+                            InlineKeyboardButton('💸 ᴇᴀʀɴ ᴍᴏɴᴇʏ ᴡɪᴛʜ ʙᴏᴛ ', callback_data='earn')
+                            ]]    
         reply_markup = InlineKeyboardMarkup(buttons)
         await query.message.edit_text(
             text=script.START_TXT.format(query.from_user.mention, get_status(), query.from_user.id),
